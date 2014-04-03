@@ -1,11 +1,14 @@
 class RMK
-  attr_accessor :config
+  attr_accessor :config, :path
   Tasks = Struct.new(:name, :deps, :action, :done)
   def initialize
     @tasks = {}
     @taskdone = {}
     self.config = {}
   end
+
+  def [](*a) config.[](*a) end
+  def []=(*a) config.[]=(*a) end
 
   def task(name, deps = [], &b)
     name = name.to_sym
@@ -66,6 +69,15 @@ class RMK
   def resolve(a = "")
     "C:/RMSFX/rmk/#{a}"
   end
+
+  def resolve_path(a = "")
+    @path + "/#{a}"
+  end
+
+  def ft_cmp(a, b, op = :<=>)
+    a.map{|x| File.mtime(x).to_i rescue 1e100 }.max{|x, y| x.send(op, y)}.send(op, b.map{|x| File.mtime(x).to_i rescue -1e100}.min{|x, y| x.send(op, y)})
+  end
+
 end
 
 def rmk
@@ -74,6 +86,8 @@ end
 
 rmk.find_rmk(ARGV.shift).each{|x|
   puts "RMK #{x}"
+  rmk.path = File.dirname(x)
   load x
 }
 
+puts "Done."
